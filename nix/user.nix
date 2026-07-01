@@ -4,8 +4,8 @@ let
   dotfilesDir = "${config.home.homeDirectory}/github/dotfiles-mac-nix";
 in
 {
-  home.username = "yourname";
-  home.homeDirectory = "/Users/yourname";
+  home.username = "yuweiyan";
+  home.homeDirectory = "/Users/yuweiyan";
   home.stateVersion = "23.11";
   home.language.base = "en_US.UTF-8";
 
@@ -22,6 +22,15 @@ in
     tree
     bun
     rustup
+    uv
+    nodejs_22
+    gh
+    htop
+    btop
+    rclone
+    cmake
+    neovim
+    awscli2
     zip
     unzip
     nerd-fonts.hack
@@ -36,7 +45,13 @@ in
 
   home.sessionVariables = {
     EDITOR = "vim";
+    JAVA_HOME = "/Library/Java/JavaVirtualMachines/jdk-23.jdk/Contents/Home";
   };
+
+  home.sessionPath = [
+    "${config.home.homeDirectory}/.local/bin"
+    "${config.home.homeDirectory}/.cargo/bin"
+  ];
 
   programs.git = {
     enable = true;
@@ -44,8 +59,8 @@ in
     signing.format = null;
     settings = {
       user = {
-        name = "Your Name";
-        email = "you@example.com";
+        name = "Yuwei Yan";
+        email = "yuweiyan@uchicago.edu";
       };
       core.editor = "vim";
       color.ui = true;
@@ -118,6 +133,25 @@ in
     };
     initContent = ''
       bindkey '^f' autosuggest-accept
+
+      # >>> conda initialize >>>
+      # !! Contents within this block are managed by 'conda init' !!
+      __conda_setup="$('/Users/yuweiyan/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+      if [ $? -eq 0 ]; then
+          eval "$__conda_setup"
+      else
+          if [ -f "/Users/yuweiyan/miniconda3/etc/profile.d/conda.sh" ]; then
+              . "/Users/yuweiyan/miniconda3/etc/profile.d/conda.sh"
+          else
+              export PATH="/Users/yuweiyan/miniconda3/bin:$PATH"
+          fi
+      fi
+      unset __conda_setup
+      # <<< conda initialize <<<
+
+      # Ensure nix-managed tools (e.g. uv, node) take priority over conda's,
+      # since conda init above prepends its own bin dir to PATH.
+      export PATH="/etc/profiles/per-user/yuweiyan/bin:$HOME/.nix-profile/bin:/run/current-system/sw/bin:$PATH"
     '';
   };
 

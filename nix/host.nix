@@ -8,7 +8,7 @@
 
   homebrew = {
     enable = true;
-    onActivation.cleanup = "zap";
+    onActivation.cleanup = "none";
     taps = [ ];
     brews = [
       "autoconf"
@@ -23,9 +23,9 @@
     starship
   ];
 
-  system.primaryUser = "yourname";
-  users.users.yourname = {
-    home = "/Users/yourname";
+  system.primaryUser = "yuweiyan";
+  users.users.yuweiyan = {
+    home = "/Users/yuweiyan";
     shell = pkgs.zsh;
   };
 
@@ -34,7 +34,7 @@
       AppleInterfaceStyle = "Dark";
       KeyRepeat = 2;
       InitialKeyRepeat = 15;
-      "com.apple.swipescrolldirection" = false;
+      "com.apple.swipescrolldirection" = true;
       NSAutomaticCapitalizationEnabled = false;
       NSAutomaticPeriodSubstitutionEnabled = false;
       NSAutomaticSpellingCorrectionEnabled = false;
@@ -50,13 +50,13 @@
     };
 
     trackpad = {
-      Clicking = true;
+      Clicking = false;
     };
   };
 
   environment.systemPath = [
     "/run/current-system/sw/bin"
-    "/etc/profiles/per-user/yourname/bin"
+    "/etc/profiles/per-user/yuweiyan/bin"
   ];
 
   system.stateVersion = 6;

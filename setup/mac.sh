@@ -15,7 +15,7 @@ fi
 
 # Install Nix via Determinate if missing
 if ! command -v nix &> /dev/null; then
-  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.sh/nix | sh -s -- install
+  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 fi
 
 # Install Homebrew if missing
@@ -28,6 +28,11 @@ if [ -x /run/current-system/sw/bin/darwin-rebuild ]; then
   sudo /run/current-system/sw/bin/darwin-rebuild switch --flake "$DOTFILES_DIR#mac"
 else
   sudo nix run github:nix-darwin/nix-darwin -- switch --flake "$DOTFILES_DIR#mac"
+fi
+
+# Install Claude Code if missing
+if ! command -v claude &> /dev/null; then
+  curl -fsSL https://claude.ai/install.sh | bash
 fi
 
 # Install nvm and a default Node.js if missing
