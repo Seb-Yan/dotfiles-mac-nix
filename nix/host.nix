@@ -21,6 +21,7 @@
 
   environment.systemPackages = with pkgs; [
     starship
+    tmux
   ];
 
   system.primaryUser = "yuweiyan";

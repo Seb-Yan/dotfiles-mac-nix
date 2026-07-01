@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 
 let
-  dotfilesDir = "${config.home.homeDirectory}/github/dotfiles-mac-nix";
+  dotfilesDir = "${config.home.homeDirectory}/repos/github/dotfiles-mac-nix";
 in
 {
   home.username = "yuweiyan";
