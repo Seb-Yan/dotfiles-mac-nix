@@ -63,6 +63,11 @@
   environment.systemPath = [
     "/run/current-system/sw/bin"
     "/etc/profiles/per-user/yuweiyan/bin"
+    # Homebrew formulae (e.g. opencode, autoconf) live here; Homebrew's own
+    # installer only offers to add this via a shell-profile eval, which would
+    # get clobbered by Home Manager's declarative dotfiles anyway.
+    "/opt/homebrew/bin"
+    "/opt/homebrew/sbin"
   ];
 
   system.stateVersion = 6;

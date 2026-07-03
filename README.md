@@ -103,6 +103,8 @@ The script will:
 - apply the `nix-darwin` + Home Manager config
 - install [`nvm`](https://github.com/nvm-sh/nvm) and a default Node.js version if needed
 
+On a fresh machine, Homebrew and `npm install -g` (used for the agent harnesses below) are both being set up on this very first run, so their bin directories aren't on `PATH` yet in your current shell. Open a new terminal window/tab after the script finishes so the shell picks up the updated `PATH`.
+
 ## How I manage changes later
 
 After the initial bootstrap, the usual workflow is:
