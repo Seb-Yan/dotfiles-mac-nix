@@ -1,26 +1,22 @@
 # dotfiles-mac-nix
 
-This repo is the public, reusable core of my Mac setup.
+This is my personal Mac setup, forked from [kunchenguid/dotfiles-mac-nix](https://github.com/kunchenguid/dotfiles-mac-nix). Unlike the upstream repo — which is deliberately trimmed down to be a shareable starter template — this fork is not meant for other people to use. It exists so I can continuously track how my machine and, especially, my agentic engineering workflow are configured, and keep evolving both over time: new tools, new agent skills, new personal preferences, all committed as they change.
 
-It is built with [Nix](https://nixos.org/), [`nix-darwin`](https://github.com/nix-darwin/nix-darwin), [Home Manager](https://github.com/nix-community/home-manager), and declarative [Homebrew](https://brew.sh/). The goal is to give macOS developers a reproducible base they can fork and adapt without inheriting someone else's entire private dotfiles repo.
-
-If you want the longer explanation, see the [blog post](https://open.substack.com/pub/kunchenguid/p/how-i-built-a-reproducible-mac-setup?utm_campaign=post-expanded-share&utm_medium=web).
+It is built with [Nix](https://nixos.org/), [`nix-darwin`](https://github.com/nix-darwin/nix-darwin), [Home Manager](https://github.com/nix-community/home-manager), and declarative [Homebrew](https://brew.sh/). For the reasoning behind the original template's design, see the [blog post](https://open.substack.com/pub/kunchenguid/p/how-i-built-a-reproducible-mac-setup?utm_campaign=post-expanded-share&utm_medium=web) — most of it still applies here, minus the "keep it generic" constraint.
 
 ## What this repo does
 
-It gives you a structured starting point for managing a Mac setup in code:
+It manages my Mac setup as code:
 
 - bootstrap a fresh Mac with `setup/mac.sh`
 - configure macOS defaults with `nix-darwin`
 - manage user packages and shell behavior with Home Manager
 - install GUI apps and macOS-native tools declaratively with Homebrew
-- keep selected app config in the repo and link it into place
-
-I include [WezTerm](https://wezfurlong.org/wezterm/) as the one concrete app-config example because it is real enough to demonstrate the pattern without dragging in the more personal parts of my workflow.
+- keep app config, editor config, and other personal files in the repo and link them into place
 
 ## Agentic engineering workflow
 
-This repo also bootstraps the terminal-centric, multi-agent workflow described in ["L8 Principal's Agentic Engineering Workflow"](https://www.youtube.com/watch?v=iQyg-KypKAA):
+This repo also bootstraps the terminal-centric, multi-agent workflow described in ["L8 Principal's Agentic Engineering Workflow"](https://www.youtube.com/watch?v=iQyg-KypKAA), and is where I track changes to it over time:
 
 - **Agent harnesses**: [Claude Code](https://claude.ai), [Codex CLI](https://github.com/openai/codex), [Pi](https://github.com/earendil-works/pi), and [OpenCode](https://github.com/sst/opencode)
 - **Session management**: `tmux`, configured declaratively via `programs.tmux` in `nix/user.nix` (vi copy-mode, mouse support, session persistence via `tmux-resurrect`/`tmux-continuum`)
@@ -32,22 +28,11 @@ This repo also bootstraps the terminal-centric, multi-agent workflow described i
 
 `setup/mac.sh` installs the npm-distributed pieces (Codex, Pi, `skills`, `gnhf`, `no-mistakes`) and registers the AXI-family skills globally. Homebrew (`nix/host.nix`) handles OpenCode and OpenSuperWhisper. Treehouse is a proper Nix package via the flake input.
 
-Not included: a multi-agent orchestrator like [First Mate](https://github.com/kunchenguid/firstmate) (it's meant to be cloned as its own project workspace, not installed system-wide) and personal memory files (`~/.claude/CLAUDE.md` and friends) — those preferences are yours to write, not something a starter repo should invent for you.
+## Personal fork, not a template
 
-## What is intentionally not included
+The upstream repo intentionally excludes editor config, personal scripts, agent memory files, and other workflow-specific material so it stays usable as a generic starting point for other people. That constraint doesn't apply here — this fork is for my use only, so going forward I plan to fold those things in too: editor config, personal scripts, agent memory files (`~/.claude/CLAUDE.md` and friends), and other personal preferences as they stabilize enough to be worth versioning.
 
-This repo does **not** try to mirror my entire machine.
-
-I left out things that are too personal or too workflow-specific to make a good public starter repo, including:
-
-- editor config (bring your own — mine lives in its own repo)
-- custom shell systems
-- personal scripts
-- agent memory files and personal preferences
-- secrets and tokens
-- private automation
-
-The goal is to provide a reusable foundation that you can make your own.
+The one thing that stays out regardless: secrets and tokens. Nothing that grants access to an account or service belongs in this repo, personal-use or not.
 
 ## Repo structure
 
@@ -55,46 +40,19 @@ The goal is to provide a reusable foundation that you can make your own.
 - `flake.nix` — top-level Nix wiring (nixpkgs, nix-darwin, home-manager, treehouse)
 - `nix/host.nix` — machine-level macOS config (nix-darwin), Homebrew brews/casks
 - `nix/user.nix` — user environment: packages, shell, git, tmux, fonts, dotfiles (Home Manager)
-- `files/.config/wezterm/wezterm.lua` — example app config linked into place
-- `blog.md` — local copy of the [blog post](https://open.substack.com/pub/kunchenguid/p/how-i-built-a-reproducible-mac-setup?utm_campaign=post-expanded-share&utm_medium=web)
+- `files/.config/wezterm/wezterm.lua` — WezTerm config linked into place
+- `files/agents/AGENTS.md` — global agent memory file, symlinked into every harness's expected location
+- `blog.md` — local copy of the upstream author's [blog post](https://open.substack.com/pub/kunchenguid/p/how-i-built-a-reproducible-mac-setup?utm_campaign=post-expanded-share&utm_medium=web)
 
-## How to use it
-
-### 1. Clone the repo
+## Setting up a new Mac from this repo
 
 ```bash
-git clone git@github.com:kunchenguid/dotfiles-mac-nix.git ~/github/dotfiles-mac-nix
+git clone git@github.com:Seb-Yan/dotfiles-mac-nix.git ~/github/dotfiles-mac-nix
 cd ~/github/dotfiles-mac-nix
-```
-
-### 2. Replace the placeholders
-
-Update values like:
-
-- `yourname`
-- `/Users/yourname`
-- `Your Name`
-- `you@example.com`
-
-If you are on an Intel Mac, change the system target in `flake.nix` from:
-
-```nix
-system = "aarch64-darwin";
-```
-
-to:
-
-```nix
-system = "x86_64-darwin";
-```
-
-### 3. Run the bootstrap script on a fresh Mac
-
-This repo is primarily set up for Apple Silicon Macs. If you are on Intel, make the architecture change above before you run the bootstrap script.
-
-```bash
 bash setup/mac.sh
 ```
+
+This repo targets Apple Silicon (`system = "aarch64-darwin"` in `flake.nix`).
 
 The script will:
 
@@ -139,11 +97,10 @@ I wanted a setup that was:
 - reproducible on a new Mac
 - structured enough to maintain
 - pragmatic about macOS
-- publishable without oversharing the rest of my workflow
-
-That is why this repo focuses on the reusable core.
+- a living record of how my workflow (especially the agentic one) evolves, not a one-time snapshot
 
 ## Related
 
-- Long-form write-up: [blog post](https://open.substack.com/pub/kunchenguid/p/how-i-built-a-reproducible-mac-setup?utm_campaign=post-expanded-share&utm_medium=web)
-- GitHub repo: <https://github.com/kunchenguid/dotfiles-mac-nix>
+- Upstream template this was forked from: <https://github.com/kunchenguid/dotfiles-mac-nix>
+- Long-form write-up of the original design: [blog post](https://open.substack.com/pub/kunchenguid/p/how-i-built-a-reproducible-mac-setup?utm_campaign=post-expanded-share&utm_medium=web)
+- This fork: <https://github.com/Seb-Yan/dotfiles-mac-nix>

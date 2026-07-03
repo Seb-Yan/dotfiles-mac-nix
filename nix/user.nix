@@ -1,7 +1,7 @@
 { config, pkgs, treehouse, ... }:
 
 let
-  dotfilesDir = "${config.home.homeDirectory}/repos/github/dotfiles-mac-nix";
+  dotfilesDir = "${config.home.homeDirectory}/github/dotfiles-mac-nix";
 in
 {
   home.username = "yuweiyan";
@@ -143,7 +143,7 @@ in
       reset = "git reset --soft HEAD^";
       rebasem = "git rebase -i main";
       rebasemst = "git rebase -i master";
-      rebuild = "/run/current-system/sw/bin/darwin-rebuild switch --flake ~/repos/github/dotfiles-mac-nix#mac";
+      rebuild = "/run/current-system/sw/bin/darwin-rebuild switch --flake ~/github/dotfiles-mac-nix#mac";
     };
     initContent = ''
       bindkey '^f' autosuggest-accept
@@ -221,5 +221,14 @@ in
 
   home.file = {
     ".config/wezterm".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/.config/wezterm";
+
+    # Global agent memory file, shared across harnesses. Each one insists on
+    # its own path/filename (unlike skills, which several of them already
+    # read from a common ~/.agents/skills dir), so we symlink all of them to
+    # the same source instead of maintaining four copies.
+    ".claude/CLAUDE.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
+    ".codex/AGENTS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
+    ".config/opencode/AGENTS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
+    ".pi/agent/AGENTS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
   };
 }
