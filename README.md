@@ -42,6 +42,7 @@ The one thing that stays out regardless: secrets and tokens. Nothing that grants
 - `nix/user.nix` — user environment: packages, shell, git, tmux, fonts, dotfiles (Home Manager)
 - `files/.config/wezterm/wezterm.lua` — WezTerm config linked into place
 - `files/agents/AGENTS.md` — global agent memory file, symlinked into every harness's expected location
+- `files/agents/OPINIONS.md`, `files/agents/VOICE.md` — referenced conditionally from `AGENTS.md`, symlinked to `~/OPINIONS.md` and `~/VOICE.md`
 - `blog.md` — local copy of the upstream author's [blog post](https://open.substack.com/pub/kunchenguid/p/how-i-built-a-reproducible-mac-setup?utm_campaign=post-expanded-share&utm_medium=web)
 
 ## Setting up a new Mac from this repo

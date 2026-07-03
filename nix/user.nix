@@ -230,5 +230,10 @@ in
     ".codex/AGENTS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
     ".config/opencode/AGENTS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
     ".pi/agent/AGENTS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
+
+    # Referenced conditionally from AGENTS.md above (not loaded by default
+    # into every session, only read when the task calls for it).
+    "OPINIONS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/OPINIONS.md";
+    "VOICE.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/VOICE.md";
   };
 }
