@@ -143,7 +143,7 @@ in
       reset = "git reset --soft HEAD^";
       rebasem = "git rebase -i main";
       rebasemst = "git rebase -i master";
-      rebuild = "/run/current-system/sw/bin/darwin-rebuild switch --flake ~/github/dotfiles-mac-nix#mac";
+      rebuild = "sudo /run/current-system/sw/bin/darwin-rebuild switch --flake ~/github/dotfiles-mac-nix#mac";
     };
     initContent = ''
       bindkey '^f' autosuggest-accept
@@ -166,6 +166,36 @@ in
       # Ensure nix-managed tools (e.g. uv, node) take priority over conda's,
       # since conda init above prepends its own bin dir to PATH.
       export PATH="/etc/profiles/per-user/yuweiyan/bin:$HOME/.nix-profile/bin:/run/current-system/sw/bin:$PATH"
+
+      # Acquire a Treehouse worktree in lease mode and open it in a new tmux
+      # window (or just cd there outside tmux), so a parallel agent session
+      # gets its own isolated working directory. Usage: twget [label]
+      twget() {
+        local repo
+        repo=$(basename "$(git rev-parse --show-toplevel)") || return 1
+        local label="$1"
+        [ -z "$label" ] && label="$repo"
+        # Not named "path": zsh ties that name to the $PATH array, and
+        # localizing it empties $PATH for the rest of this function.
+        local wt_path
+        wt_path=$(treehouse get --lease --lease-holder "$label") || return 1
+        if [ -n "$TMUX" ]; then
+          tmux new-window -c "$wt_path" -n "$label"
+        else
+          cd "$wt_path"
+        fi
+      }
+
+      # Return the Treehouse worktree for the current directory and close the
+      # tmux window it was opened in. Usage: twreturn [treehouse-return-flags]
+      twreturn() {
+        local wt_path
+        wt_path=$(pwd)
+        treehouse return "$wt_path" "$@" || return 1
+        if [ -n "$TMUX" ]; then
+          tmux kill-window
+        fi
+      }
     '';
   };
 
@@ -235,5 +265,17 @@ in
     # into every session, only read when the task calls for it).
     "OPINIONS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/OPINIONS.md";
     "VOICE.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/VOICE.md";
+
+    # Claude Code's sandbox/permissions/hooks config. Deliberately NOT
+    # symlinked to a single cross-harness source like AGENTS.md above: unlike
+    # a plain-text memory file, this is consumed by Claude Code's own JSON
+    # schema and hook protocol, which Codex (TOML config, coarse
+    # sandbox_mode enum, no domain allowlist, non-blocking notify) and
+    # OpenCode (JS/TS plugin hooks, no core OS sandbox) and Pi (no built-in
+    # permission system at all) don't share. If those harnesses get
+    # equivalent policy later, it belongs in files/codex/, files/opencode/,
+    # files/pi/ as their own native config, not a symlink to this file.
+    ".claude/settings.json".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/claude/settings.json";
+    ".claude/hooks/bash-guard.sh".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/claude/hooks/bash-guard.sh";
   };
 }

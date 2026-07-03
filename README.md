@@ -20,7 +20,7 @@ This repo also bootstraps the terminal-centric, multi-agent workflow described i
 
 - **Agent harnesses**: [Claude Code](https://claude.ai), [Codex CLI](https://github.com/openai/codex), [Pi](https://github.com/earendil-works/pi), and [OpenCode](https://github.com/sst/opencode)
 - **Session management**: `tmux`, configured declaratively via `programs.tmux` in `nix/user.nix` (vi copy-mode, mouse support, session persistence via `tmux-resurrect`/`tmux-continuum`)
-- **Parallel work**: [Treehouse](https://github.com/kunchenguid/treehouse) for disposable git worktrees per agent session, pulled in as a Nix flake input
+- **Parallel work**: [Treehouse](https://github.com/kunchenguid/treehouse) for disposable git worktrees per agent session, pulled in as a Nix flake input. `twget [label]` and `twreturn` (shell functions in `nix/user.nix`) wrap Treehouse's lease mode with tmux, so a lease opens straight into a new tmux window and returning it closes that window
 - **Planning & review pipeline**: [Lavish](https://github.com/kunchenguid/lavish-axi) (interactive HTML planning artifacts) and [No Mistakes](https://github.com/kunchenguid/no-mistakes) (review/test/docs/PR pipeline)
 - **Long-running agents**: [Good Night, Have Fun](https://github.com/kunchenguid/gnhf) for unattended agent loops against a stop condition
 - **Agent-ergonomic tools**: the [AXI](https://github.com/kunchenguid/axi) family (`gh-axi`, `chrome-devtools-axi`) and the [Vercel `skills` CLI](https://github.com/vercel-labs/skills) for installing/managing agent skills
@@ -78,7 +78,7 @@ rebuild
 This alias is included in the shell config and expands to the repo path used in this guide:
 
 ```bash
-/run/current-system/sw/bin/darwin-rebuild switch --flake ~/github/dotfiles-mac-nix#mac
+sudo /run/current-system/sw/bin/darwin-rebuild switch --flake ~/github/dotfiles-mac-nix#mac
 ```
 
 ## Where to add new tools

@@ -21,6 +21,79 @@ config.inactive_pane_hsb = {
 	brightness = 0.5,
 }
 
+-- 启动 login zsh，默认进入 home 目录
+config.default_prog = { "/bin/zsh", "-l" }
+config.default_cwd = wezterm.home_dir
+
+-- 保留更多终端历史
+config.scrollback_lines = 100000
+
+-- 使用闪烁竖线光标
+config.default_cursor_style = "BlinkingBar"
+config.cursor_blink_rate = 500
+
+-- 给窗口边缘留白
+config.window_padding = {
+	left = 8,
+	right = 8,
+	top = 8,
+	bottom = 8,
+}
+
+-- 使用 macOS 原生全屏
+config.native_macos_fullscreen_mode = true
+
+-- 简洁标签栏
+config.use_fancy_tab_bar = false
+config.tab_bar_at_bottom = false
+
+-- 识别可点击链接
+config.hyperlink_rules = wezterm.default_hyperlink_rules()
+
+-- 剪贴板、分屏和 pane 移动快捷键
+config.keys = {
+	{
+		key = "c",
+		mods = "CMD",
+		action = wezterm.action.CopyTo("Clipboard"),
+	},
+	{
+		key = "v",
+		mods = "CMD",
+		action = wezterm.action.PasteFrom("Clipboard"),
+	},
+	{
+		key = "|",
+		mods = "CMD|SHIFT",
+		action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }),
+	},
+	{
+		key = "_",
+		mods = "CMD|SHIFT",
+		action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }),
+	},
+	{
+		key = "h",
+		mods = "CMD|SHIFT",
+		action = wezterm.action.ActivatePaneDirection("Left"),
+	},
+	{
+		key = "j",
+		mods = "CMD|SHIFT",
+		action = wezterm.action.ActivatePaneDirection("Down"),
+	},
+	{
+		key = "k",
+		mods = "CMD|SHIFT",
+		action = wezterm.action.ActivatePaneDirection("Up"),
+	},
+	{
+		key = "l",
+		mods = "CMD|SHIFT",
+		action = wezterm.action.ActivatePaneDirection("Right"),
+	},
+}
+
 if is_windows then
 	config.win32_system_backdrop = "Acrylic"
 	config.window_background_opacity = 0.7
