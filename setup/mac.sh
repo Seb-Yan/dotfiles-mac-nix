@@ -106,7 +106,9 @@ fi
 # this repo and its AGENTS.md plus bin/ toolbelt become the orchestrator.
 : "${FIRSTMATE_DIR:=$HOME/github/firstmate}"
 if [ -d "$FIRSTMATE_DIR/.git" ]; then
-  git -C "$FIRSTMATE_DIR" pull --ff-only
+  if ! git -C "$FIRSTMATE_DIR" pull --ff-only; then
+    echo "Warning: could not fast-forward First Mate checkout at $FIRSTMATE_DIR (local changes or network issue) - leaving it as-is" >&2
+  fi
 elif [ -e "$FIRSTMATE_DIR" ]; then
   echo "First Mate path exists but is not a git checkout: $FIRSTMATE_DIR" >&2
   exit 1
