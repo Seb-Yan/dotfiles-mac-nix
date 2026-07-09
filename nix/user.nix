@@ -531,13 +531,10 @@ in
     ".codex/AGENTS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
     ".config/opencode/AGENTS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
     ".pi/agent/AGENTS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
-    # Antigravity CLI (Google) still keys off the legacy ~/.gemini directory
-    # it inherited from Gemini CLI, and reads AGENTS.md there for global
-    # rules. Docs for this are inconsistent since the tool only shipped in
-    # May 2026 (some sources say ~/.gemini/GEMINI.md instead) - if `agy`
-    # doesn't pick this up in practice, check `agy --help` / its settings
-    # under ~/.gemini/antigravity-cli/ and adjust the path below.
+    # Antigravity CLI (Google) reads AGENTS.md and still supports the legacy
+    # GEMINI.md filename it inherited from Gemini CLI.
     ".gemini/AGENTS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
+    ".gemini/GEMINI.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/AGENTS.md";
 
     # Referenced conditionally from AGENTS.md above (not loaded by default
     # into every session, only read when the task calls for it).
