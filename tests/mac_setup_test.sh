@@ -5,7 +5,7 @@
 # setup/mac.sh installs Nix and activates a real nix-darwin system, so it can
 # never be run for real in CI or in a dev checkout. This test instead runs
 # the actual script with PATH masked down to a directory of stub
-# executables (curl, sh, nix, darwin-rebuild, sudo, npm, skills, bash) that simulate a
+# executables (curl, sh, nix, darwin-rebuild, sudo, npm, git, skills, bash) that simulate a
 # fresh Mac: they record every invocation to a log and fake just enough
 # filesystem state (a profile script, a "nix" binary) for the script's own
 # logic to progress, without ever touching the real network, Nix store,
@@ -317,6 +317,10 @@ if [ "${1:-}" = "install" ] && [ "${2:-}" = "-g" ]; then
       @earendil-works/pi-coding-agent) bin="pi" ;;
       skills) bin="skills" ;;
       gnhf) bin="gnhf" ;;
+      gh-axi) bin="gh-axi" ;;
+      chrome-devtools-axi) bin="chrome-devtools-axi" ;;
+      lavish-axi) bin="lavish-axi" ;;
+      tasks-axi) bin="tasks-axi" ;;
       *) continue ;;
     esac
 
@@ -332,6 +336,25 @@ exit 0
 BIN
     chmod +x "$HOME/.npm-global/bin/$bin"
   done
+fi
+EOF
+
+  write_stub "$stub_bin/git" <<'EOF'
+#!/bin/bash
+set -euo pipefail
+# shellcheck source=/dev/null
+. "${SANDBOX_GUARD:?}" || exit 1
+guard_write_path "$STUB_LOG"
+echo "git $*" >> "$STUB_LOG"
+
+if [ "${1:-}" = "clone" ]; then
+  dest="${3:-}"
+  if [ -z "$dest" ]; then
+    echo "git clone stub expected explicit destination" >&2
+    exit 1
+  fi
+  guard_write_path "$dest"
+  mkdir -p "$dest/.git"
 fi
 EOF
 
@@ -481,19 +504,136 @@ EOF
     "$name: skills CLI install path exercised" && pass "$name: skills CLI install path exercised"
   assert_contains "$invocations" "npm install -g gnhf" \
     "$name: gnhf install path exercised" && pass "$name: gnhf install path exercised"
+  assert_contains "$invocations" "npm install -g gh-axi" \
+    "$name: gh-axi install path exercised" && pass "$name: gh-axi install path exercised"
+  assert_contains "$invocations" "npm install -g chrome-devtools-axi" \
+    "$name: chrome-devtools-axi install path exercised" && pass "$name: chrome-devtools-axi install path exercised"
+  assert_contains "$invocations" "npm install -g lavish-axi" \
+    "$name: lavish-axi install path exercised" && pass "$name: lavish-axi install path exercised"
+  assert_contains "$invocations" "npm install -g tasks-axi" \
+    "$name: tasks-axi install path exercised" && pass "$name: tasks-axi install path exercised"
   assert_contains "$invocations" "curl -fsSL https://claude.ai/install.sh" \
     "$name: Claude Code install path exercised" && pass "$name: Claude Code install path exercised"
   assert_contains "$invocations" "curl -fsSL https://raw.githubusercontent.com/kunchenguid/no-mistakes/main/docs/install.sh" \
     "$name: no-mistakes install path exercised" && pass "$name: no-mistakes install path exercised"
+  assert_contains "$invocations" "git clone https://github.com/kunchenguid/firstmate" \
+    "$name: First Mate checkout path exercised" && pass "$name: First Mate checkout path exercised"
   assert_contains "$invocations" "skills add kunchenguid/lavish-axi --skill lavish -g" \
     "$name: Lavish skill registration exercised" && pass "$name: Lavish skill registration exercised"
+  assert_contains "$invocations" "skills add kunchenguid/tasks-axi --skill tasks-axi -g" \
+    "$name: tasks-axi skill registration exercised" && pass "$name: tasks-axi skill registration exercised"
   assert_contains "$invocations" "skills add anthropics/skills --skill skill-creator -g" \
     "$name: skill-creator registration exercised" && pass "$name: skill-creator registration exercised"
+}
+
+# A failed `git pull --ff-only` on an already-cloned First Mate checkout
+# (diverged local history, network blip, etc.) must not abort the rest of
+# setup/mac.sh under `set -euo pipefail` -- it should warn and continue.
+test_firstmate_pull_failure() {
+  local sandbox stub_bin fixture home_dir log
+  sandbox=$(mktemp -d "${TMPDIR:-/tmp}/mac-setup-test-firstmate-pull-failure.XXXXXX")
+  if [ -z "${DEBUG_KEEP_SANDBOX:-}" ]; then
+    trap 'rm -rf "$sandbox"' RETURN
+  else
+    echo "DEBUG: keeping sandbox $sandbox" >&2
+  fi
+
+  stub_bin="$sandbox/stub-bin"
+  fixture="$sandbox/repo"
+  home_dir="$sandbox/home"
+  log="$sandbox/log"
+
+  mkdir -p "$stub_bin" "$home_dir"
+  export SANDBOX_ROOT="$sandbox"
+  write_sandbox_guard "$sandbox/sandbox-guard.sh"
+  export SANDBOX_GUARD="$sandbox/sandbox-guard.sh"
+  assert_path_under_sandbox "$log"
+  : > "$log"
+  make_fixture_repo "$fixture"
+  write_shared_stubs "$stub_bin"
+
+  # Override the shared git stub so `pull` always fails, simulating a
+  # non-fast-forward checkout or network blip.
+  write_stub "$stub_bin/git" <<'EOF'
+#!/bin/bash
+set -euo pipefail
+# shellcheck source=/dev/null
+. "${SANDBOX_GUARD:?}" || exit 1
+guard_write_path "$STUB_LOG"
+echo "git $*" >> "$STUB_LOG"
+
+for arg in "$@"; do
+  if [ "$arg" = "pull" ]; then
+    echo "fatal: stub simulated non-fast-forward pull failure" >&2
+    exit 1
+  fi
+done
+
+if [ "${1:-}" = "clone" ]; then
+  dest="${3:-}"
+  if [ -z "$dest" ]; then
+    echo "git clone stub expected explicit destination" >&2
+    exit 1
+  fi
+  guard_write_path "$dest"
+  mkdir -p "$dest/.git"
+fi
+EOF
+
+  export STUB_LOG="$log"
+  export STUB_NIX_BIN_DIR="$sandbox/fake-nix/var/nix/profiles/default/bin"
+  export NIX_DAEMON_PROFILE="$sandbox/fake-nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
+  export HOME="$home_dir"
+  export NVM_DIR="$HOME/.nvm"
+
+  # Pre-existing First Mate checkout so setup/mac.sh takes the `git pull`
+  # branch instead of cloning.
+  local fm_dir="$sandbox/firstmate"
+  mkdir -p "$fm_dir/.git"
+  export FIRSTMATE_DIR="$fm_dir"
+
+  # Simulate an already-bootstrapped machine (fast path) to keep this
+  # scenario focused on the First Mate pull-failure behavior.
+  write_stub "$stub_bin/nix" <<'EOF'
+#!/bin/bash
+set -euo pipefail
+# shellcheck source=/dev/null
+. "${SANDBOX_GUARD:?}" || exit 1
+guard_write_path "$STUB_LOG"
+echo "nix $*" >> "$STUB_LOG"
+exit 0
+EOF
+  export DARWIN_REBUILD_BIN="$sandbox/current-system/sw/bin/darwin-rebuild"
+  write_stub "$DARWIN_REBUILD_BIN" <<'EOF'
+#!/bin/bash
+set -euo pipefail
+# shellcheck source=/dev/null
+. "${SANDBOX_GUARD:?}" || exit 1
+guard_write_path "$STUB_LOG"
+echo "darwin-rebuild $*" >> "$STUB_LOG"
+exit 0
+EOF
+
+  local out status
+  set +e
+  out=$(env PATH="$stub_bin:/usr/bin:/bin:/usr/sbin:/sbin" "$REAL_BASH" "$fixture/setup/mac.sh" 2>&1)
+  status=$?
+  set -e
+
+  if [ "$status" -ne 0 ]; then
+    fail "firstmate-pull-failure: setup/mac.sh aborted on a failed First Mate pull (exit $status). Output:"$'\n'"$out"
+    return
+  fi
+  pass "firstmate-pull-failure: setup/mac.sh did not abort on a failed First Mate pull"
+
+  assert_contains "$out" "Warning: could not fast-forward First Mate checkout" \
+    "firstmate-pull-failure: warning was printed" && pass "firstmate-pull-failure: warning was printed"
 }
 
 test_sandbox_guard
 run_scenario "fresh-machine"
 run_scenario "already-installed"
+test_firstmate_pull_failure
 
 echo
 if [ "$FAILURES" -eq 0 ]; then
