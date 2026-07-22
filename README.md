@@ -52,6 +52,7 @@ The one thing that stays out regardless: secrets and tokens. Nothing that grants
 - `files/.config/wezterm/wezterm.lua` - WezTerm config linked into place
 - `files/agents/AGENTS.md` - global agent memory file, symlinked into every harness's expected location
 - `files/agents/OPINIONS.md`, `files/agents/VOICE.md` - referenced conditionally from `AGENTS.md`, symlinked to `~/OPINIONS.md` and `~/VOICE.md`
+- `files/agents/skills/` - personal cross-harness skills linked into `~/.agents/skills`, including a lazily loaded professional-writing router that selects role, thinking approach, tone, and format only for explicit communication tasks
 - `tests/` - regression tests for the bootstrap script
 - `blog.md` - local copy of the upstream author's [blog post](https://open.substack.com/pub/kunchenguid/p/how-i-built-a-reproducible-mac-setup?utm_campaign=post-expanded-share&utm_medium=web)
 

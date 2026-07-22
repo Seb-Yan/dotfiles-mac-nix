@@ -1,7 +1,80 @@
-{ config, pkgs, treehouse, ... }:
+{ config, lib, pkgs, treehouse, ... }:
 
 let
   dotfilesDir = "${config.home.homeDirectory}/github/dotfiles-mac-nix";
+  outlookMcpPackage = "@softeria/ms-365-mcp-server@0.131.3";
+  outlookMcp = pkgs.writeShellApplication {
+    name = "outlook-mcp";
+    runtimeInputs = [ pkgs.nodejs_22 ];
+    text = ''
+      package=${lib.escapeShellArg outlookMcpPackage}
+      scopes="User.Read Mail.ReadWrite Mail.Send Calendars.ReadWrite Contacts.Read"
+
+      run_server() {
+        exec npx --yes "$package" \
+          --preset outlook \
+          --allowed-scopes "$scopes" \
+          --toon \
+          "$@"
+      }
+
+      case "''${1:-}" in
+        server)
+          shift
+          run_server "$@"
+          ;;
+        login)
+          shift
+          exec npx --yes "$package" \
+            --preset outlook \
+            --allowed-scopes "$scopes" \
+            --login \
+            "$@"
+          ;;
+        logout)
+          shift
+          exec npx --yes "$package" --logout "$@"
+          ;;
+        accounts)
+          shift
+          exec npx --yes "$package" --list-accounts "$@"
+          ;;
+        permissions)
+          shift
+          exec npx --yes "$package" \
+            --preset outlook \
+            --allowed-scopes "$scopes" \
+            --list-permissions \
+            "$@"
+          ;;
+        help|--help|-h)
+          printf '%s\n' \
+            'bin: outlook-mcp' \
+            'description: Run and authenticate the shared Outlook MCP server' \
+            'commands[5]{name,description}:' \
+            '  server,Start the stdio MCP server' \
+            '  login,Authenticate an Outlook account with Microsoft device login' \
+            '  logout,Remove cached Outlook authentication' \
+            '  accounts,List authenticated Outlook accounts' \
+            '  permissions,Show the Microsoft Graph permissions requested'
+          ;;
+        "")
+          printf '%s\n' \
+            'bin: outlook-mcp' \
+            'description: Run and authenticate the shared Outlook MCP server' \
+            'status: setup requires a one-time human login' \
+            'help[2]:' \
+            '  Run outlook-mcp login to authenticate' \
+            '  Run outlook-mcp accounts to inspect authenticated accounts'
+          ;;
+        *)
+          printf 'error: unknown command %s\n' "$1"
+          printf '%s\n' 'help: valid commands are server, login, logout, accounts, permissions, help'
+          exit 2
+          ;;
+      esac
+    '';
+  };
 in
 {
   home.username = "yuweiyan";
@@ -45,6 +118,7 @@ in
     noto-fonts-cjk-sans
     noto-fonts-color-emoji
     font-awesome
+    outlookMcp
   ];
 
   fonts.fontconfig.enable = true;
@@ -541,6 +615,39 @@ in
     "OPINIONS.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/OPINIONS.md";
     "VOICE.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/VOICE.md";
 
+    # Personal cross-harness skills use the same shared source directory as
+    # globally installed skills. Claude also needs its own discovery link.
+    ".agents/skills/adaptive-professional-communication".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/skills/adaptive-professional-communication";
+    ".claude/skills/adaptive-professional-communication".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/skills/adaptive-professional-communication";
+    ".agents/skills/outlook-mail".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/skills/outlook-mail";
+    ".claude/skills/outlook-mail".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/skills/outlook-mail";
+    ".agents/skills/wezterm-workspace-manager".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/skills/wezterm-workspace-manager";
+    ".claude/skills/wezterm-workspace-manager".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/agents/skills/wezterm-workspace-manager";
+
+    # OpenCode and Antigravity can consume the shared Outlook MCP server from
+    # declarative JSON. Claude Code and Codex keep MCP entries inside mutable
+    # user config files, so the activation step below upserts those entries.
+    ".config/opencode/opencode.json".text = builtins.toJSON {
+      "$schema" = "https://opencode.ai/config.json";
+      mcp.outlook = {
+        type = "local";
+        command = [ "outlook-mcp" "server" ];
+        enabled = true;
+      };
+    };
+    ".gemini/config/mcp_config.json".text = builtins.toJSON {
+      mcpServers.outlook = {
+        command = "outlook-mcp";
+        args = [ "server" ];
+      };
+    };
+    ".gemini/antigravity-cli/mcp_config.json".text = builtins.toJSON {
+      mcpServers.outlook = {
+        command = "outlook-mcp";
+        args = [ "server" ];
+      };
+    };
+
     # Claude Code's sandbox/permissions/hooks config. Deliberately NOT
     # symlinked to a single cross-harness source like AGENTS.md above: unlike
     # a plain-text memory file, this is consumed by Claude Code's own JSON
@@ -552,5 +659,28 @@ in
     # files/pi/ as their own native config, not a symlink to this file.
     ".claude/settings.json".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/claude/settings.json";
     ".claude/hooks/bash-guard.sh".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/claude/hooks/bash-guard.sh";
+
+    # Claude-only skills: haven't been ported to any other harness yet, so
+    # they live under files/claude/ rather than the shared ~/.agents/skills
+    # tree. These were previously ad hoc files living only in ~/.claude/skills
+    # with no backup - captured here so a fresh machine setup doesn't lose them.
+    ".claude/skills/github-multi-account/SKILL.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/claude/skills/github-multi-account/SKILL.md";
+    ".claude/skills/setup-bitbucket-mirror/SKILL.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/claude/skills/setup-bitbucket-mirror/SKILL.md";
+    ".claude/skills/setup-dev-trunk/SKILL.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/claude/skills/setup-dev-trunk/SKILL.md";
+    ".claude/skills/ship-pr/SKILL.md".source = config.lib.file.mkOutOfStoreSymlink "${dotfilesDir}/files/claude/skills/ship-pr/SKILL.md";
   };
+
+  # Preserve the rest of Claude Code's and Codex's mutable user configuration
+  # while declaratively reconciling just the named Outlook MCP entry.
+  home.activation.configureOutlookMcp = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if command -v claude >/dev/null 2>&1; then
+      run claude mcp remove --scope user outlook >/dev/null 2>&1 || true
+      run claude mcp add --scope user outlook -- outlook-mcp server
+    fi
+
+    if command -v codex >/dev/null 2>&1; then
+      run codex mcp remove outlook >/dev/null 2>&1 || true
+      run codex mcp add outlook -- outlook-mcp server
+    fi
+  '';
 }

@@ -1,4 +1,5 @@
 local wezterm = require("wezterm")
+local act = wezterm.action
 
 local config = wezterm.config_builder()
 
@@ -46,9 +47,76 @@ config.native_macos_fullscreen_mode = false
 -- 简洁标签栏
 config.use_fancy_tab_bar = false
 config.tab_bar_at_bottom = false
+config.tab_max_width = 32
+config.show_new_tab_button_in_tab_bar = false
+config.prefer_to_spawn_tabs = true
 
 -- 识别可点击链接
 config.hyperlink_rules = wezterm.default_hyperlink_rules()
+
+-- 终端响铃时弹出系统通知(用于 Claude Code 等需要人工交互或已完成的提示)
+wezterm.on("bell", function(window, pane)
+	window:toast_notification("WezTerm", "Bell rang - check the terminal", nil, 4000)
+end)
+
+local rename_tab = act.PromptInputLine({
+	description = "输入标签名称，例如 editor、tests 或 logs",
+	action = wezterm.action_callback(function(window, _, line)
+		if line and line ~= "" then
+			window:active_tab():set_title(line)
+		end
+	end),
+})
+
+-- WezTerm 没有原生固定标签。用名称标记并移到最左侧来模拟固定。
+local pin_tab = act.PromptInputLine({
+	description = "输入固定标签名称",
+	action = wezterm.action_callback(function(window, pane, line)
+		if line and line ~= "" then
+			window:active_tab():set_title("📌 " .. line)
+			window:perform_action(act.MoveTab(0), pane)
+		end
+	end),
+})
+
+local switch_workspace = act.PromptInputLine({
+	description = "输入 workspace 名称",
+	action = wezterm.action_callback(function(window, pane, line)
+		if line and line ~= "" then
+			window:perform_action(act.SwitchToWorkspace({ name = line }), pane)
+		end
+	end),
+})
+
+wezterm.on("update-right-status", function(window, _)
+	window:set_right_status(wezterm.format({
+		{ Foreground = { Color = "#89b4fa" } },
+		{ Attribute = { Intensity = "Bold" } },
+		{ Text = "  " .. window:active_workspace() .. "  " },
+	}))
+end)
+
+wezterm.on("format-tab-title", function(tab)
+	local title = tab.tab_title
+	if not title or title == "" then
+		title = tab.active_pane.title
+	end
+
+	local text = string.format(" %d: %s ", tab.tab_index + 1, title)
+	if tab.is_active then
+		return {
+			{ Background = { Color = "#89b4fa" } },
+			{ Foreground = { Color = "#11111b" } },
+			{ Attribute = { Intensity = "Bold" } },
+			{ Text = text },
+		}
+	end
+
+	return {
+		{ Foreground = { Color = "#bac2de" } },
+		{ Text = text },
+	}
+end)
 
 -- 剪贴板、分屏和 pane 移动快捷键
 config.keys = {
@@ -96,6 +164,49 @@ config.keys = {
 		key = "l",
 		mods = "CMD|SHIFT",
 		action = wezterm.action.ActivatePaneDirection("Right"),
+	},
+	{
+		key = "r",
+		mods = "CMD|ALT",
+		action = rename_tab,
+	},
+	{
+		key = "p",
+		mods = "CMD|ALT",
+		action = pin_tab,
+	},
+	{
+		key = "w",
+		mods = "CMD|ALT",
+		action = switch_workspace,
+	},
+	{
+		key = "f",
+		mods = "CMD|ALT",
+		action = act.ShowLauncherArgs({
+			flags = "FUZZY|TABS|WORKSPACES",
+			title = "搜索标签和 workspace",
+		}),
+	},
+	{
+		key = "z",
+		mods = "CMD|ALT",
+		action = act.TogglePaneZoomState,
+	},
+	{
+		key = "[",
+		mods = "CMD|ALT|SHIFT",
+		action = act.MoveTabRelative(-1),
+	},
+	{
+		key = "]",
+		mods = "CMD|ALT|SHIFT",
+		action = act.MoveTabRelative(1),
+	},
+	{
+		key = "o",
+		mods = "CMD|ALT",
+		action = act.ActivateLastTab,
 	},
 }
 

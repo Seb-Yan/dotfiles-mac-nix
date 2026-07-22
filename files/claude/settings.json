@@ -60,7 +60,6 @@
     "failIfUnavailable": true,
     "autoAllowBashIfSandboxed": true,
     "allowUnsandboxedCommands": false,
-    "excludedCommands": ["gh *", "npx gh-axi *", "npx -y gh-axi *"],
     "network": {
       "allowedDomains": [
         "github.com",
@@ -69,10 +68,16 @@
         "registry.npmjs.org",
         "pypi.org",
         "files.pythonhosted.org",
-        "api.anthropic.com"
+        "api.anthropic.com",
+        "login.microsoftonline.com",
+        "graph.microsoft.com",
+        "registry.npmjs.org"
       ]
     },
     "filesystem": {
+      "allowWrite": [
+        "~/.npm"
+      ],
       "denyRead": [
         "~/.aws",
         "~/.config/gcloud",
@@ -81,9 +86,6 @@
         "~/.pypirc",
         "**/.env",
         "**/.env.*"
-      ],
-      "allowWrite": [
-        "~/.npm"
       ]
     },
     "credentials": {
@@ -109,16 +111,22 @@
           "mode": "deny"
         }
       ]
-    }
+    },
+    "excludedCommands": [
+      "gh *",
+      "npx gh-axi *",
+      "npx -y gh-axi *"
+    ]
   },
-  "autoMemoryDirectory": "~/.claude/memory",
   "effortLevel": "xhigh",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
+  "autoMemoryDirectory": "~/.claude/memory",
   "theme": "dark-daltonized",
+  "preferredNotifChannel": "terminal_bell",
   "agentPushNotifEnabled": true,
   "autoMode": {
     "hard_deny": [
